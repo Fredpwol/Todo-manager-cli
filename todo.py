@@ -10,6 +10,9 @@ PASSWORD = None
 FILENAME = "todo_cli.db"
 
 
+
+current_user = os.environ.get("TODO-AUTH-CREDENTIAL") or None
+
 if not os.path.exists(FILENAME):
     db =  queries.create_db()
 else:
@@ -26,15 +29,20 @@ def arg_pasers():
     login_parser.add_argument("-u", "--username", dest='username', type=str, help='Input your username.')
     login_parser.add_argument("-p", "--password", dest="password", type=str, help="Input your passowrd.")
     parser.add_argument("-a","--add", dest="add", help="Adds a task to the todo-list")
+    sub_parsers.add_parser("users", help="A list of all users registed to todo-cli on current computer")
     args = parser.parse_args()
     main(args)
 
 
 def main(args):
     if args.mode == "login":
-        sys.stdout.write(queries.get_user(db,1)) 
+        sys.stdout.write(queries.get_user(db,username=args.username, password=args.password)) 
     elif args.mode == 'register':
         queries.create_user(db,username=args.username, password=args.password)
+    elif args.mode == 'users':
+        queries.list_users(db)
+
+    
 
 
 
