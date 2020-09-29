@@ -3,42 +3,17 @@ import sqlite3
 import argparse
 import hashlib
 import os
+import queries
 
 USERNAME = None
 PASSWORD = None
 FILENAME = "todo_cli.db"
 
 
-def create_db():
-    db = sqlite3.connect(FILENAME)
-    curr = db.cursor()
-    curr.execute("CREATE TABLE users (id INT PRIMARY KEY , username VARCHAR(50) NOT NULL, password VARCHAR(16) NOT NULL)")
-    curr.execute("CREATE TABLE task (id INT PRIMARY KEY, task VARCHAR(100) NOT NULL, status BOOLEAN DEFAULT 0 NOT NULL )")
-    db.commit()
-    curr.close()
-    return db
-
-
 if not os.path.exists(FILENAME):
-    db = create_db()
+    db =  queries.create_db()
 else:
     db = sqlite3.connect(FILENAME)
-
-def get_user(id):
-    curr = db.cursor()
-    user = curr.execute("SELECT username, password FROM users WHERE ID=?",(id,))
-    db.commit()
-    curr.close()
-    
-    return user.fetchone()
-
-
-
-def create_user(username, password):
-    curr = db.cursor()
-    curr.execute("INSERT INTO users VALUES (NULL,?,?)",(username, password))
-    curr.close()
-    db.commit()
 
 
 def arg_pasers():
@@ -57,9 +32,9 @@ def arg_pasers():
 
 def main(args):
     if args.mode == "login":
-        sys.stdout.write(get_user(1)) 
+        sys.stdout.write(queries.get_user(db,1)) 
     elif args.mode == 'register':
-        create_user(username=args.username, password=args.password)
+        queries.create_user(db,username=args.username, password=args.password)
 
 
 
