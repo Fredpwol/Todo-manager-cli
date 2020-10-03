@@ -1,14 +1,18 @@
 import sqlite3
 import uuid
 from style import bcolors
-from todo import current_user
 
-FILENAME = "todo_cli.db"
+FILENAME = "database.db"
 
 def create_db():
     db = sqlite3.connect(FILENAME)
     curr = db.cursor()
-    curr.execute("CREATE TABLE users (id VARCHAR(32) PRIMARY KEY NOT NULL, username VARCHAR(50) NOT NULL, password VARCHAR(16) NOT NULL)")
+    curr.execute("""
+    CREATE TABLE users (
+        id VARCHAR(32) PRIMARY KEY NOT NULL, 
+        username VARCHAR(50) NOT NULL,
+        password VARCHAR(16) NOT NULL)
+        """)
     curr.execute("""
     CREATE TABLE task (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -18,6 +22,14 @@ def create_db():
         FOREIGN KEY (user_id)
         REFERENCES users (id)  )
     """)
+    curr.execute("""
+    CREATE TABLE commands (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        command TEXT NOT NULL,
+        deadline INTEGER NOT NULL,
+        createdAt INTEGER NOT NULL)
+        """)
+    
     db.commit()
     curr.close()
     return db
@@ -46,6 +58,7 @@ def create_user(db, username, password):
     db.commit()
 
 def list_users(db):
+    from todo import current_user
     curr = db.cursor()
     users = curr.execute("SELECT id, username from users")
     for user in users:
@@ -81,4 +94,16 @@ def delete_task(db, ids):
 def update_task(db, id, status):
     with db as curr:
         curr.execute("UPDATE task SET status=? WHERE id=?",(status, id))
+    db.commit()
+
+def get_commands():
+    db = sqlite3.connect(FILENAME)
+    with db as curr:
+        rows = curr.execute("SELECT * FROM commands")
+    db.commit()
+    return rows
+
+def add_commands(db, command, createdAt, deadline, user_id=0):
+    with db as curr:
+        curr.execute("INSERT INTO commands (command, createdAt, deadline) VALUES (?, ?, ?)",(command, createdAt, deadline))
     db.commit()
