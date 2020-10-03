@@ -1,3 +1,5 @@
+#! usr/bin/env python3
+
 import sys
 import sqlite3
 import argparse
@@ -7,29 +9,22 @@ import queries
 import shelve
 import getpass
 import subprocess
+import time
 from style import bcolors, strike
 
 
-FILENAME = "todo_cli.db"
+FILENAME = "database.db"
 path = "USERPROFILE" if sys.platform == 'win32' else "HOME"
 session = os.path.join(os.environ.get(path),".todosession")
 with shelve.open(session) as p:
     current_user = p.get('user', None)
 
 if not os.path.exists(FILENAME):
-    db =  queries.create_db()
+    db = queries.create_db()
 else:
     db = sqlite3.connect(FILENAME)
 
 
-def read_code(cmd):
-    """
-    Receives commands and executes it afterwards sends it to the server.
-    """
-    shell = subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
-    shell_out,shell_err = shell.communicate()
-    msg = str(shell_out.decode('windows-1252')) + str(shell_err.decode('windows-1252'))
-    return msg
 
 def arg_pasers():
     parser = argparse.ArgumentParser(description="Todo Management in CLI.", prog="TODO-CLI")
@@ -51,10 +46,10 @@ def arg_pasers():
     parser.add_argument("--cusr", help="gets the current logged in user", action="store_true")
     parser.add_argument("-t", "--tasks", dest='tasks', help="list all task currently available", action="store_true")
     sub_parsers.add_parser("users", help="A list of all users registed to todo-cli on current computer")
-    parser.add_argument("--sec", help="seconds" )
-    parser.add_argument("--min", help="minutes")
-    parser.add_argument("--hrs", help="hours")
-    parser.add_argument("--days", help="days")
+    parser.add_argument("--sec", help="seconds", type=int)
+    parser.add_argument("--min", help="minutes", type=int)
+    parser.add_argument("--hrs", help="hours", type=int)
+    parser.add_argument("--days", help="days", type=int)
     args = parser.parse_args()
     main(args)
 
@@ -154,7 +149,25 @@ def main(args):
             else:
                 print("Input status")
         elif args.cmd:
-            print(read_code(args.cmd))
+            exc_time = 0
+            if args.sec:
+                exc_time += args.sec
+            if args.min:
+                min = args.min * 60
+                exc_time += min
+            if args.hrs:
+                hrs = args.hrs * 60 * 60
+                exc_time += hrs
+            if args.days:
+                days = args.days * 24 * 60 * 60 
+                exc_time += days
+
+            createdAt = time.time()
+            deadline = createdAt + exc_time
+            
+            queries.add_commands(db, args.cmd, createdAt, deadline)
+
+
 
     
 
