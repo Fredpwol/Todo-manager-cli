@@ -1,5 +1,7 @@
 import sqlite3
 import uuid
+from style import bcolors
+from todo import current_user
 
 FILENAME = "todo_cli.db"
 
@@ -45,9 +47,10 @@ def create_user(db, username, password):
 
 def list_users(db):
     curr = db.cursor()
-    users = curr.execute("SELECT username from users")
+    users = curr.execute("SELECT id, username from users")
     for user in users:
-        print(user[0])
+        name =  bcolors.OKBLUE+user[1]+bcolors.ENDC if user[0] == current_user else user[1]
+        print(name, end=", ")
     curr.close()
 
 

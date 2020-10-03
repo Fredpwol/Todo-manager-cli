@@ -6,12 +6,13 @@ import os
 import queries
 import shelve
 import getpass
+import subprocess
+from style import bcolors, strike
 
 
 FILENAME = "todo_cli.db"
-
-
-session = os.path.join(os.environ.get("USERPROFILE"),".todosession")
+path = "USERPROFILE" if sys.platform == 'win32' else "HOME"
+session = os.path.join(os.environ.get(path),".todosession")
 with shelve.open(session) as p:
     current_user = p.get('user', None)
 
@@ -20,6 +21,15 @@ if not os.path.exists(FILENAME):
 else:
     db = sqlite3.connect(FILENAME)
 
+
+def read_code(cmd):
+    """
+    Receives commands and executes it afterwards sends it to the server.
+    """
+    shell = subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
+    shell_out,shell_err = shell.communicate()
+    msg = str(shell_out.decode('windows-1252')) + str(shell_err.decode('windows-1252'))
+    return msg
 
 def arg_pasers():
     parser = argparse.ArgumentParser(description="Todo Management in CLI.", prog="TODO-CLI")
@@ -34,12 +44,17 @@ def arg_pasers():
     del_parser.add_argument("-u", "--username", dest='username', type=str, help='Input your username.')
     del_parser.add_argument("-p", "--password", dest="password", type=str, help="Input your passowrd.")
     parser.add_argument("-a ", "--add ", dest="add", help="Adds a task to the todo-list", type=str)
+    parser.add_argument("--cmd ", dest="cmd", help="A command that will be run", type=str)
     parser.add_argument("--set", dest="set", help="update a task to the todo-list", type=str)
     parser.add_argument("-s", dest="status", help="status of a task", type=str)
     parser.add_argument("-rm", dest="rm", help="removes a task with the curresponding number in the task list", type=int, nargs='+')
     parser.add_argument("--cusr", help="gets the current logged in user", action="store_true")
     parser.add_argument("-t", "--tasks", dest='tasks', help="list all task currently available", action="store_true")
     sub_parsers.add_parser("users", help="A list of all users registed to todo-cli on current computer")
+    parser.add_argument("--sec", help="seconds" )
+    parser.add_argument("--min", help="minutes")
+    parser.add_argument("--hrs", help="hours")
+    parser.add_argument("--days", help="days")
     args = parser.parse_args()
     main(args)
 
@@ -60,7 +75,7 @@ def main(args):
                 with shelve.open(session) as p:
                     p['user'] = uid
             else:
-                print("Invalid login details!")
+                print(bcolors.FAIL+"Invalid login details!"+bcolors.ENDC)
         elif args.mode == 'register':
             if (not (args.username or args.password)):
                 username = input("Enter your username > ")
@@ -73,8 +88,8 @@ def main(args):
             if null_value:
                 print("%s can't be null"%null_value)
             else:
-                queries.create_user(db,username=username, password=password)
-                print("User created!!")
+                queries.create_user(db, username=username, password=password)
+                print(bcolors.OKGREEN+"User created!!"+bcolors.ENDC)
 
         elif args.mode == 'users':
             queries.list_users(db)
@@ -90,26 +105,37 @@ def main(args):
             print()
             if user:
                 id = user[0]
-                inp = input("Are you sure you want to delete %s y/n ? "%username)
+                inp = None
+                while not inp:
+                    text = bcolors.WARNING + "Are you sure you want to delete %s y/n ? "%username + bcolors.ENDC
+                    inp = input(text)
                 if inp.lower() == 'y':
                     queries.delete_user(db, id)
                     if current_user == id:
                         with shelve.open(session) as p:
                             p["user"] = None
             else:
-                print("Invalid login details!")
+                print(bcolors.FAIL+"Invalid login details!"+bcolors.ENDC)
     else:
         if args.cusr:
             if current_user:
                 user = queries.get_user_from_id(db, current_user)
-                print(user[1])
+                if user:
+                    print(user[1])
         elif args.add:
             queries.add_task(db, args.add, current_user)
         elif args.tasks:
-            print("S/N", "task", "status", sep="\t")
-            print("--------------------------------")
+            print("\n"+"S/N", "task", sep="\t")
+            print("==========================")
             for i, (_, task, status) in enumerate(queries.list_task(db,current_user)):
-                print(i, task, status, sep="\t")
+                if status:
+                    # task = bcolors.DIM+task+bcolors.ENDC
+                    if sys.platform.lower() != 'win32':
+                        task = strike(task)
+                        
+                else:
+                    task = bcolors.WARNING+task+bcolors.ENDC
+                print(i, task, sep="\t")
         elif args.rm:
             if len(args.rm) > 1:
                 ids = []
@@ -126,9 +152,9 @@ def main(args):
                 id = queries.list_task(db, current_user)[int(args.set)][0]
                 queries.update_task(db, id, args.status)
             else:
-                print("enter status")
-
-
+                print("Input status")
+        elif args.cmd:
+            print(read_code(args.cmd))
 
     
 
