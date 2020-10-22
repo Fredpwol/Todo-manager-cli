@@ -162,9 +162,10 @@ def main(args):
                 days = args.days * 24 * 60 * 60 
                 exc_time += days
 
-            createdAt = time.time()
+            createdAt = time.time()+1
             deadline = createdAt + exc_time
-            
+            os.system("pkill -f task_scheduler.py")
+            os.system("nohup python3 -u ./task_scheduler.py > output.log &")
             queries.add_commands(db, args.cmd, createdAt, deadline)
 
 
