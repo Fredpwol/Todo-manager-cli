@@ -17,7 +17,9 @@ def create_db():
     CREATE TABLE task (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         task VARCHAR(100) NOT NULL, 
-        status BOOLEAN DEFAULT 0 NOT NULL, 
+        status BOOLEAN DEFAULT 0 NOT NULL,
+        expired BOOLEAN DEFAULT 0,
+        deadline INTEGER,
         user_id VARCHAR(32),
         FOREIGN KEY (user_id)
         REFERENCES users (id)  )
@@ -26,8 +28,11 @@ def create_db():
     CREATE TABLE commands (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         command TEXT NOT NULL,
+        createdAt INTEGER NOT NULL,
         deadline INTEGER NOT NULL,
-        createdAt INTEGER NOT NULL)
+        user_id VARCHAR(32),
+        FOREIGN KEY (user_id)
+        REFERENCES users (id))
         """)
     
     db.commit()
