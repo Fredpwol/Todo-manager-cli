@@ -10,7 +10,7 @@ import shelve
 import getpass
 import subprocess
 import time
-from style import bcolors, strike
+from main.style import bcolors, strike
 
 
 FILENAME = "database.db"
@@ -40,11 +40,12 @@ def arg_pasers():
     del_parser.add_argument("-p", "--password", dest="password", type=str, help="Input your passowrd.")
     parser.add_argument("-a ", "--add ", dest="add", help="Adds a task to the todo-list", type=str)
     parser.add_argument("--cmd ", dest="cmd", help="A command that will be run", type=str)
-    parser.add_argument("--set", dest="set", help="update a task to the todo-list", type=str)
+    parser.add_argument("--set", dest="set", help="update a task to the todo-list", type=int)
     parser.add_argument("-s", dest="status", help="status of a task", type=str)
     parser.add_argument("-rm", dest="rm", help="removes a task with the curresponding number in the task list", type=int, nargs='+')
     parser.add_argument("--cusr", help="gets the current logged in user", action="store_true")
     parser.add_argument("-t", "--tasks", dest='tasks', help="list all task currently available", action="store_true")
+    parser.add_argument('--only', help="specify if to view only todo task or command task", type=str)
     sub_parsers.add_parser("users", help="A list of all users registed to todo-cli on current computer")
     parser.add_argument("--sec", help="seconds", type=int)
     parser.add_argument("--min", help="minutes", type=int)
@@ -122,12 +123,16 @@ def main(args):
         elif args.tasks:
             print("\n"+"S/N", "task", sep="\t")
             print("==========================")
-            for i, (_, task, status) in enumerate(queries.list_task(db,current_user)):
-                if status:
+            for i, (_, task, status, type) in enumerate(queries.list_task(db,current_user, args.only)):
+                if type == "todo" and status:
                     # task = bcolors.DIM+task+bcolors.ENDC
                     if sys.platform.lower() != 'win32':
                         task = strike(task)
-                        
+                if type == "cmd":
+                    if time.time() > status:
+                        task = bcolors.FAIL+task+bcolors.ENDC
+                    else:
+                        task = bcolors.OKGREEN+task+bcolors.ENDC
                 else:
                     task = bcolors.WARNING+task+bcolors.ENDC
                 print(i, task, sep="\t")
@@ -144,7 +149,7 @@ def main(args):
             queries.delete_task(db, ids)
         elif args.set:
             if args.status:
-                id = queries.list_task(db, current_user)[int(args.set)][0]
+                id = queries.list_task(db, current_user)[args.set][0]
                 queries.update_task(db, id, args.status)
             else:
                 print("Input status")
@@ -165,8 +170,8 @@ def main(args):
             createdAt = time.time()+1
             deadline = createdAt + exc_time
             os.system("pkill -f task_scheduler.py")
-            os.system("nohup python3 -u ./task_scheduler.py > output.log &")
-            queries.add_commands(db, args.cmd, createdAt, deadline)
+            os.system("nohup python3 -u ./main/task_scheduler.py > output.log &")
+            queries.add_commands(db, args.cmd, createdAt, deadline, current_user)
 
 
 

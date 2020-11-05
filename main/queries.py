@@ -1,6 +1,6 @@
 import sqlite3
 import uuid
-from style import bcolors
+from main.style import bcolors
 
 FILENAME = "database.db"
 
@@ -83,10 +83,17 @@ def add_task(db, task, user_id):
         curr.execute("INSERT INTO task (task, user_id) VALUES (?, ?)",(task, user_id ))
     db.commit()
 
-def list_task(db, user_id):
+def list_task(db, user_id, only):
+    todo_query = "SELECT id, task, status, 'todo' FROM task WHERE user_id=?"
+    cmd_query = "SELECT id, command, deadline, 'cmd' FROM commands WHERE user_id=?"
     res = []
     with db as curr:
-        tasks = curr.execute("SELECT id, task, status FROM task WHERE user_id=?",(user_id,))
+        if not only:
+            tasks = curr.execute(f"{todo_query} UNION {cmd_query}",(user_id,user_id))
+        elif only == "todo":
+            tasks = curr.execute(todo_query, (user_id,))
+        elif only == "cmd":
+            tasks = curr.execute(cmd_query, (user_id,))
         for task in tasks:
             res.append(task)
     return res
@@ -110,5 +117,5 @@ def get_commands():
 
 def add_commands(db, command, createdAt, deadline, user_id=0):
     with db as curr:
-        curr.execute("INSERT INTO commands (command, createdAt, deadline) VALUES (?, ?, ?)",(command, createdAt, deadline))
+        curr.execute("INSERT INTO commands (command, createdAt, deadline, user_id) VALUES (?, ?, ?, ?)",(command, createdAt, deadline, user_id))
     db.commit()

