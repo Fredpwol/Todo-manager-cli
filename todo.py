@@ -1,16 +1,16 @@
-#! usr/bin/env python3
+#!/usr/bin/python3
 
 import sys
 import sqlite3
 import argparse
 import hashlib
 import os
-import queries
 import shelve
 import getpass
 import subprocess
 import time
 from main.style import bcolors, strike
+from main import queries
 
 
 FILENAME = "database.db"
