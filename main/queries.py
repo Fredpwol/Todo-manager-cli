@@ -1,8 +1,6 @@
 import sqlite3
 import uuid
-from main.style import bcolors
-
-FILENAME = "database.db"
+from main import FILENAME
 
 def create_db():
     db = sqlite3.connect(FILENAME)
