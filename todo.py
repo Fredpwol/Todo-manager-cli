@@ -10,12 +10,8 @@ import getpass
 import subprocess
 import time
 from main.style import bcolors, strike
-from main import queries
+from main import queries, session, FILENAME
 
-
-FILENAME = "database.db"
-path = "USERPROFILE" if sys.platform == 'win32' else "HOME"
-session = os.path.join(os.environ.get(path),".todosession")
 with shelve.open(session) as p:
     current_user = p.get('user', None)
 
@@ -170,7 +166,7 @@ def main(args):
             createdAt = time.time()+1
             deadline = createdAt + exc_time
             os.system("pkill -f task_scheduler.py")
-            os.system("nohup python3 -u ./main/task_scheduler.py > output.log &")
+            os.system("ls")
             queries.add_commands(db, args.cmd, createdAt, deadline, current_user)
 
 
