@@ -40,8 +40,9 @@ def arg_pasers():
     parser.add_argument("-s", dest="status", help="status of a task", type=str)
     parser.add_argument("-rm", dest="rm", help="removes a task with the curresponding number in the task list", type=int, nargs='+')
     parser.add_argument("--cusr", help="gets the current logged in user", action="store_true")
+    parser.add_argument("--clear", help="remove all task", action="store_true", default=False)
     parser.add_argument("-t", "--tasks", dest='tasks', help="list all task currently available", action="store_true")
-    parser.add_argument('--only', help="specify if to view only todo task or command task", type=str)
+    parser.add_argument('--only', help="specify if to view only todo task or command task valid argument are 'cmd' and 'todo'", type=str)
     sub_parsers.add_parser("users", help="A list of all users registed to todo-cli on current computer")
     parser.add_argument("--sec", help="seconds", type=int)
     parser.add_argument("--min", help="minutes", type=int)
@@ -117,6 +118,8 @@ def main(args):
         elif args.add:
             queries.add_task(db, args.add, current_user)
         elif args.tasks:
+            if args.only and not args.only in ["todo", "cmd"]: 
+                raise TypeError("%s is not a valid argument use either cmd or todo"%args.only)
             print("\n"+"S/N", "task", sep="\t")
             print("==========================")
             for i, (_, task, status, type) in enumerate(queries.list_task(db,current_user, args.only)):
@@ -132,6 +135,13 @@ def main(args):
                 else:
                     task = bcolors.WARNING+task+bcolors.ENDC
                 print(i, task, sep="\t")
+        elif args.clear:
+            state = ""
+            while not state.lower() in ['y', 'n']: 
+                state = input("Are you sure you want to clear tasks? y/n > ")
+            if state.lower() == "y":
+                queries.clear_tasks(db)
+            return
         elif args.rm:
             if len(args.rm) > 1:
                 ids = []
@@ -165,9 +175,10 @@ def main(args):
 
             createdAt = time.time()+1
             deadline = createdAt + exc_time
-            os.system("pkill -f task_scheduler.py")
-            os.system("ls")
             queries.add_commands(db, args.cmd, createdAt, deadline, current_user)
+            os.system("pkill -f task_scheduler.py")
+            FILE_PATH = os.path.dirname(__file__)
+            os.system("nohup python3 -u %s/task_scheduler.py &"%FILE_PATH)
 
 
 
