@@ -1,8 +1,6 @@
-#!/usr/bin/env python3
-
 import sched
 import time
-import queries
+from main import queries
 import datetime
 import subprocess
 import multiprocessing
