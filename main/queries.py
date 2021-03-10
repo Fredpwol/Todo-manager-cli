@@ -1,6 +1,7 @@
 import sqlite3
 import uuid
 from main import FILENAME
+from main.style import bcolors
 
 def create_db():
     db = sqlite3.connect(FILENAME)
@@ -81,7 +82,7 @@ def add_task(db, task, user_id):
         curr.execute("INSERT INTO task (task, user_id) VALUES (?, ?)",(task, user_id ))
     db.commit()
 
-def list_task(db, user_id, only):
+def list_task(db, user_id, only=None):
     todo_query = "SELECT id, task, status, 'todo' FROM task WHERE user_id=?"
     cmd_query = "SELECT id, command, deadline, 'cmd' FROM commands WHERE user_id=?"
     res = []
@@ -99,6 +100,12 @@ def list_task(db, user_id, only):
 def delete_task(db, ids):
     with db as curr:
         curr.execute("DELETE FROM task WHERE id IN %s "%str(ids))
+    db.commit()
+
+def clear_tasks(db):
+    with db as curr:
+        curr.execute("DELETE FROM task")
+        curr.execute("DELETE FROM commands")
     db.commit()
 
 def update_task(db, id, status):
