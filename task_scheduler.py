@@ -38,5 +38,3 @@ def run_scheduler():
 
 while True:
     run_scheduler()
-
-#TODO : Resolve running task parrallel
