@@ -4,6 +4,7 @@ from main import queries
 import datetime
 import subprocess
 import multiprocessing
+import signal
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -20,6 +21,7 @@ def read_code(cmd):
 
 queue = []
 
+
 def add_task(task):
     event_scheduler = sched.scheduler(time.time, time.sleep)
     if not task[0] in queue:
@@ -35,8 +37,6 @@ def run_scheduler():
         pool.map(add_task, commands)
 
 while True:
-    p = multiprocessing.Process(target=run_scheduler)
-    p.start()
-    p.join()
+    run_scheduler()
 
 #TODO : Resolve running task parrallel
